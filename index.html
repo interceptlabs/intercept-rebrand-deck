@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intercept Rebrand — Slides + Motion</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;1,300&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080807; overflow-x: hidden; scroll-snap-type: y mandatory; }
+
+  .slides { padding-top: 0; }
+  .slide-wrap {
+    position: relative; margin: 0 auto;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; scroll-snap-align: start;
+  }
+  .slide-wrap canvas { display: block; width: 100%; height: auto; }
+
+  /* Text overlay — sits on top of canvas */
+  .text-layer {
+    position: absolute; top: 0; left: 0; width: 1920px; height: 1080px;
+    transform-origin: top left; pointer-events: none;
+  }
+  .text-layer > div { position: absolute; white-space: pre-line; }
+
+</style>
+</head>
+<body>
+
+<div id="slideCounter" style="display:none;">1 / 16</div>
+
+<div class="slides" id="slides"></div>
+
+<script>
+const W = 1920, H = 1080;
+const BG = '#0F0E0C';
+const GOLD = '#C9A962';
+const WHITE = '#F0EEEB';
+const MUTED = '#8A857D';
+const DIM = '#5C5750';
+
+function hexToRgb(h){return[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];}
+const gRgb=hexToRgb(GOLD), wRgb=hexToRgb(WHITE), mRgb=hexToRgb(MUTED), dRgb=hexToRgb(DIM);
+function rgba(c,a){return`rgba(${c[0]},${c[1]},${c[2]},${a})`;}
+
+// ─── Noise ───
+class Noise{constructor(s){this.g=[[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];this.p=[];this.pm=[];let x=s||0;for(let i=0;i<256;i++){x=(x*16807+7)%2147483647;this.p[i]=x%256;}for(let i=0;i<512;i++)this.pm[i]=this.p[i&255];}
+d(g,x,y){return g[0]*x+g[1]*y;}
+n(x,y){const F=.5*(Math.sqrt(3)-1),G=(3-Math.sqrt(3))/6;let s=(x+y)*F,i=Math.floor(x+s),j=Math.floor(y+s),t=(i+j)*G,x0=x-(i-t),y0=y-(j-t),i1=x0>y0?1:0,j1=x0>y0?0:1,x1=x0-i1+G,y1=y0-j1+G,x2=x0-1+2*G,y2=y0-1+2*G,ii=i&255,jj=j&255,g0=this.pm[ii+this.pm[jj]]%12,g1=this.pm[ii+i1+this.pm[jj+j1]]%12,g2=this.pm[ii+1+this.pm[jj+1]]%12,n0=0,n1=0,n2=0,t0=.5-x0*x0-y0*y0;if(t0>=0){t0*=t0;n0=t0*t0*this.d(this.g[g0],x0,y0);}let t1=.5-x1*x1-y1*y1;if(t1>=0){t1*=t1;n1=t1*t1*this.d(this.g[g1],x1,y1);}let t2=.5-x2*x2-y2*y2;if(t2>=0){t2*=t2;n2=t2*t2*this.d(this.g[g2],x2,y2);}return 70*(n0+n1+n2);}}
+const N=[new Noise(42),new Noise(1042),new Noise(2042),new Noise(3042),new Noise(4042),new Noise(5042)];
+
+// ═══════════════════════════════════════
+// SLIDE DATA — text + animation zones
+// Text positions from Pencil snapshot_layout
+// ═══════════════════════════════════════
+
+const slides = [
+  // ─── SLIDE 1: Title ───
+  { label:'01 — Drift Swarm · Title',
+    texts:[
+      {t:'INTERCEPT',x:120,y:300,f:'800 160px Manrope',c:WHITE,ls:'-4px'},
+      {t:'Brand Identity\nReconsidered and Reimagined.',x:120,y:510,f:'300 36px "IBM Plex Sans"',c:MUTED},
+      {t:'March 2026  \u00b7  Confidential',x:120,y:1000,f:'400 14px "IBM Plex Mono"',c:DIM,ls:'2px'},
+    ],
+    rules:[],
+    // Copy occupies: x:120..958, y:300..620 + meta at 1000
+    // Empty zone: right half
+    animZone:{x:960,y:0,w:960,h:1080},
+  },
+  // ─── SLIDE 2: Provocation ───
+  { label:'02 — Grid Pulse · The Provocation',
+    texts:[
+      {t:'THE PROVOCATION',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:"We\u2019re building something that\nsubverts the way B2B marketing\nfor Global Tech works.",x:120,y:280,f:'800 56px Manrope',c:WHITE,ls:'-1px',lh:1.08},
+      {t:"InterceptOS and our AI-first approach are rewriting the\nplaybook for how companies reach, engage, and convert\ntheir audiences. We\u2019re not iterating on old processes.",x:120,y:580,f:'300 28px "IBM Plex Sans"',c:MUTED,lh:1.5},
+      {t:'So why should our brand play it safe?',x:120,y:820,f:'italic 300 36px "IBM Plex Sans"',c:GOLD},
+    ],
+    rules:[],
+    // Copy: left ~1200px wide, scattered y:120..867
+    // Empty: right column
+    animZone:{x:1320,y:0,w:600,h:1080},
+  },
+  // ─── SLIDE 3: Mandate ───
+  { label:'03 — Convergence · The Mandate',
+    texts:[
+      {t:'THE MANDATE',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'Our brand should be\nas disruptive as\nour product.',x:120,y:240,f:'800 64px Manrope',c:WHITE,ls:'-1.5px',lh:1.05},
+      {t:'Subversive',x:120,y:572,f:'700 28px Manrope',c:WHITE},
+      {t:'Challenge what a B2B agency is allowed to look like.',x:120,y:618,f:'300 22px "IBM Plex Sans"',c:MUTED},
+      {t:'Disruptive',x:120,y:712,f:'700 28px Manrope',c:WHITE},
+      {t:'Break the patterns your audience has been trained to expect.',x:120,y:758,f:'300 22px "IBM Plex Sans"',c:MUTED},
+      {t:'Defiant',x:120,y:852,f:'700 28px Manrope',c:WHITE},
+      {t:'Refuse to blend in with the standard landscape of enterprise.',x:120,y:898,f:'300 22px "IBM Plex Sans"',c:MUTED},
+    ],
+    rules:[],
+    // Copy: left ~600px wide
+    // Empty: right side
+    animZone:{x:680,y:0,w:1240,h:1080},
+  },
+  // ─── SLIDE 4: The Shift ───
+  { label:'04 — Phase Transition · The Shift',
+    texts:[
+      {t:'THE SHIFT',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'The meaning of\nbranding is changing.',x:120,y:220,f:'800 56px Manrope',c:WHITE,ls:'-1px',lh:1.08},
+      {t:"We\u2019re entering an era of agent/human hybrids \u2014 where AI agents make\npurchasing decisions, evaluate vendors, and curate information on behalf of humans.",x:120,y:400,f:'300 22px "IBM Plex Sans"',c:MUTED,lh:1.5},
+      {t:'What fades',x:120,y:590,f:'700 28px Manrope',c:DIM},
+      {t:'Pixel-perfect logo policing.\nRigid brand guidelines.\nCosmetic consistency for\nconsistency\u2019s sake.',x:120,y:646,f:'300 22px "IBM Plex Sans"',c:DIM,lh:1.5},
+      {t:'What matters now',x:1000,y:590,f:'700 28px Manrope',c:WHITE},
+      {t:'Machine-readable brand tokens.\nBehavioral consistency across\nAI touchpoints. Identity as a\nliving system, not a static file.',x:1000,y:646,f:'300 22px "IBM Plex Sans"',c:WHITE,lh:1.5},
+    ],
+    rules:[],
+    vrules:[{x:920,y:580,h:200,c:'#302D28'}],
+    // Copy: headline top-left, comparison bottom half
+    // Empty: top-right quadrant above comparison
+    animZone:{x:1050,y:80,w:800,h:440},
+  },
+  // ─── SLIDE 5: Brand Stack ───
+  { label:'05 — Network Nodes · Expanding Brand Stack',
+    texts:[
+      {t:'THE EXPANDING BRAND STACK',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:"In the agentic era, brand\nidentity isn\u2019t just visual \u2014\nit\u2019s architectural.",x:120,y:220,f:'800 48px Manrope',c:WHITE,ls:'-1px',lh:1.08},
+      {t:'01',x:120,y:540,f:'400 14px "IBM Plex Mono"',c:GOLD,ls:'2px'},
+      {t:'Visual Identity',x:120,y:568,f:'700 28px Manrope',c:WHITE},
+      {t:'The emotional layer. Color, form, motion,\ndesign systems. How the brand feels to a human.',x:120,y:616,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5},
+      {t:'02',x:700,y:540,f:'400 14px "IBM Plex Mono"',c:GOLD,ls:'2px'},
+      {t:'Verbal Identity',x:700,y:568,f:'700 28px Manrope',c:WHITE},
+      {t:'Voice, tone, messaging frameworks.\nHow the brand speaks \u2014 to humans and through agents.',x:700,y:616,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5},
+      {t:'03',x:1280,y:540,f:'400 14px "IBM Plex Mono"',c:GOLD,ls:'2px'},
+      {t:'Behavioral Identity',x:1280,y:568,f:'700 28px Manrope',c:WHITE},
+      {t:'How the brand acts. Response patterns,\ninteraction rules, values expressed through conduct.',x:1280,y:616,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5},
+    ],
+    rules:[],
+    // Copy: headline top, 3 pillars mid
+    // Empty: bottom band
+    animZone:{x:0,y:720,w:1920,h:360},
+  },
+  // ─── SLIDE 6: Visual Identity ───
+  { label:'06 — Noise Field · Why Visual Identity Matters',
+    texts:[
+      {t:'WHY VISUAL IDENTITY MATTERS MORE, NOT LESS',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'When agents handle the\nrational evaluation, the\nhuman moment is what\ncan close the deal.',x:120,y:280,f:'800 56px Manrope',c:WHITE,ls:'-1px',lh:1.08},
+      {t:'AI agents will narrow the field. The brand can close the deal.\nAs analytical work shifts to machines, every human encounter\nwith your brand carries more weight \u2014 and that encounter\nis visual, emotional, instinctive.',x:120,y:630,f:'300 24px "IBM Plex Sans"',c:MUTED,lh:1.55},
+      {t:"The visual identity becomes the human interface of a larger\nbrand system \u2014 the part that makes someone lean in and say\nI want to work with these people.",x:120,y:860,f:'italic 300 24px "IBM Plex Sans"',c:WHITE,lh:1.55},
+    ],
+    rules:[],
+    // Wider animation zone — particles visible across right half
+    animZone:{x:900,y:0,w:1020,h:1080},
+  },
+  // ─── SLIDE 7: Generative Identity (LIGHT) ───
+  { label:'07 — Morphing Mark · Generative Identity', bg:'#F5EDE8',
+    texts:[
+      {t:'GENERATIVE IDENTITY',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'A brand identity that\nnever stands still.',x:120,y:240,f:'800 64px Manrope',c:'#2A2825',ls:'-1.5px',lh:1.05},
+      {t:"Static logos and fixed guidelines belong to the world\nwe\u2019re disrupting. We propose a generative identity\nsystem \u2014 a brand that is always in motion, always\nevolving, always surprising.",x:120,y:470,f:'300 22px "IBM Plex Sans"',c:'#2A2825',lh:1.5},
+      {t:"This isn\u2019t a logo. It\u2019s a living system.",x:120,y:660,f:'italic 300 28px "IBM Plex Sans"',c:'#2A2825'},
+      {t:'Generative',x:120,y:790,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'Infinite variations from a shared creative DNA.',x:120,y:836,f:'300 20px "IBM Plex Sans"',c:'#2A2825'},
+      {t:'In Motion',x:650,y:790,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'Never static. It breathes, shifts, and transforms.',x:650,y:836,f:'300 20px "IBM Plex Sans"',c:'#2A2825'},
+      {t:'Surprising',x:1180,y:790,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'Defies expectation at every touchpoint.',x:1180,y:836,f:'300 20px "IBM Plex Sans"',c:'#2A2825'},
+    ],
+    rules:[],
+    animZone:{x:1000,y:0,w:920,h:720},
+  },
+  // ─── SLIDE 8: A Considered Restlessness (LIGHT) ───
+  { label:'08 — Pattern Grid · A Considered Restlessness', bg:'#F5EDE8',
+    texts:[
+      {t:'A CONSIDERED RESTLESSNESS',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:"Intercept is a company that\nnever stops innovating.\nOur brand should mirror\nthat restlessness.",x:120,y:240,f:'800 52px Manrope',c:'#2A2825',ls:'-1px',lh:1.08},
+      {t:"A generative identity system means every presentation,\nevery campaign, every touchpoint gets a unique expression \u2014\nbut they\u2019re all recognizably Intercept. Consistency moves from\nexact repetition to recognizable structure.",x:120,y:560,f:'300 22px "IBM Plex Sans"',c:MUTED,lh:1.55},
+      {t:"You know it\u2019s Intercept not because it looks the same every\ntime, but because it feels the same every time. It signals to\nthe market that we practice what we preach.\nOur dynamic identity is expressive and energetic.",x:120,y:700,f:'300 22px "IBM Plex Sans"',c:MUTED,lh:1.55},
+      {t:"And because the visual layer is no longer solely responsible\nfor brand consistency \u2014 behavioral and conversational layers\nwill carry their share \u2014 the visual identity is free to be as\nbold and expressive as the company behind it.",x:120,y:850,f:'400 22px "IBM Plex Sans"',c:'#2A2825',lh:1.55},
+    ],
+    rules:[],
+    animZone:{x:1200,y:0,w:720,h:1080},
+  },
+  // ─── SLIDE 9: Three Concepts (LIGHT) ───
+  { label:'09 — Concept Previews · Three Concepts', bg:'#F5EDE8',
+    texts:[
+      {t:'THREE CONCEPTS',x:120,y:126,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'Three Generative\nIdentity Concepts',x:120,y:240,f:'800 64px Manrope',c:'#2A2825',ls:'-1.5px',lh:1.05},
+      {t:"Each concept has the loaded potential of a complete identity\nsystem \u2014 not a single mark, but a generative engine capable of\nproducing infinite branded expressions while maintaining\ncoherent identity.",x:120,y:430,f:'300 22px "IBM Plex Sans"',c:MUTED,lh:1.5},
+      {t:'A',x:120,y:630,f:'500 14px "IBM Plex Mono"',c:GOLD,ls:'2px'},
+      {t:'Fields',x:120,y:655,f:'800 32px Manrope',c:'#2A2825'},
+      {t:'Human + AI converging to\ncreate something new.',x:120,y:706,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.45},
+      {t:'B',x:700,y:630,f:'500 14px "IBM Plex Mono"',c:GOLD,ls:'2px'},
+      {t:'Quads',x:700,y:655,f:'800 32px Manrope',c:'#2A2825'},
+      {t:'Four-point interception generating\ninfinite patterns.',x:700,y:706,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.45},
+      {t:'C',x:1280,y:630,f:'500 14px "IBM Plex Mono"',c:GOLD,ls:'2px'},
+      {t:'Fritz',x:1280,y:655,f:'800 32px Manrope',c:'#2A2825'},
+      {t:'Systematic disruption as\ndesign language.',x:1280,y:706,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.45},
+    ],
+    rules:[{x:120,y:570,w:1680,c:'#DDD5CD'}],
+    animZone:{x:1000,y:80,w:860,h:460},
+  },
+  // ─── SLIDE 10: Fields + Diagram — Pencil PNG export ───
+  { label:'10 — Fields', bg:'#FFFFFF', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-slide10-fields.png',
+  },
+  // ─── SLIDE 11: Fields System (WHITE) — y from Pencil snapshot_layout ───
+  { label:'11 — Fields System', bg:'#FFFFFF', audio:'assets/audio/fields.wav',
+    texts:[
+      {t:'FIELDS \u2014 THE SYSTEM',x:120,y:120,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'The Metaphor',x:120,y:200,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'Two organic forms \u2014 one warm (human), one cool (machine) \u2014 overlap to produce a blended third color. A new reality that neither could create alone. This is the Intercept moment.',x:120,y:258,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'Generative Potential',x:120,y:390,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'The shapes, colors, and overlap zone shift for every application. No two expressions are identical, but every one is unmistakably Intercept.',x:120,y:448,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'In Motion',x:120,y:545,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'Animated, the two forms pulse and orbit each other \u2014 sometimes converging tightly, sometimes drifting apart. The brand breathes.',x:120,y:603,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'Brand Mark',x:120,y:700,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'The word INTERCEPT sits at the exact point of convergence \u2014 emerging from the overlap zone. The logotype itself embodies the interception.',x:120,y:758,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+    ],
+    rules:[],
+    animZone:{x:1000,y:80,w:860,h:900},
+  },
+  // ─── SLIDE 11b: Fields Lockup Compositions — Pencil PNG export ───
+  { label:'11b — Fields Lockups', bg:'#FFFFFF', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-fields-lockups.png',
+  },
+  // ─── SLIDE 11c: Fields Mono Pattern Lockups — Pencil PNG export ───
+  { label:'11c — Fields Mono Patterns', bg:'#FFFFFF', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-fields-mono-lockups.png',
+  },
+  // ─── SLIDE 11d: Fields Swag — Pencil PNG export ───
+  { label:'11d — Fields Swag', bg:'#2A2825', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-fields-swag.png',
+  },
+  // ─── SLIDE 12: Quads + Diagram — Pencil PNG export ───
+  { label:'12 — Quads', bg:'#FFFFFF', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-slide12-quads.png',
+  },
+  // ─── SLIDE 13: Quads System (WHITE) — y from Pencil snapshot_layout ───
+  { label:'13 — Quads System', bg:'#FFFFFF', audio:'assets/audio/quads.wav',
+    texts:[
+      {t:'QUADS \u2014 THE SYSTEM',x:120,y:120,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'The Origin',x:120,y:200,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'A circle divided by two perpendicular lines \u2014 the fundamental interception. The four quadrants become the building blocks of the entire identity system.',x:120,y:258,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'Deconstruction',x:120,y:385,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'The quarter-circles separate, rotate, mirror, and scale to form flowers, pinwheels, hourglasses, shields, and abstract patterns. Four simple shapes yield hundreds of distinct compositions.',x:120,y:443,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'Color as Variable',x:120,y:570,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'Each quadrant carries its own color from the palette. Swap the palette and the entire identity shifts mood \u2014 from bold and energetic to calm and premium. The structure stays; the emotion transforms.',x:120,y:628,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'Versatility',x:120,y:760,f:'700 28px Manrope',c:'#2A2825'},
+      {t:'From app icons to event stages, the Quad system scales beautifully. Small: a compact four-quadrant mark. Large: an entire visual environment of interlocking arcs and geometric patterns.',x:120,y:818,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+    ],
+    rules:[], noAnim:true,
+    video:'assets/video/quads-system.webm',
+  },
+  // ─── SLIDE 13b: Quads Lockup Compositions — Pencil PNG export ───
+  { label:'13b — Quads Lockups', bg:'#F8F6F3', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-quads-lockups.png',
+  },
+  // ─── SLIDE 13c: Quads Swag — Pencil PNG export ───
+  { label:'13c — Quads Swag', bg:'#2A2825', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-quads-swag.png',
+  },
+  // ─── SLIDE 14: Fritz + Diagram — Pencil PNG export ───
+  { label:'14 — Fritz', bg:'#FFFFFF', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-slide14-fritz.png',
+  },
+  // ─── SLIDE 15: Fritz System (DARK inverted, video bg) ───
+  { label:'15 — Fritz System', bg:'#000000', noAnim:true, audio:'assets/audio/fritz.wav',
+    texts:[
+      {t:'FRITZ \u2014 THE SYSTEM',x:120,y:120,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'The Triangle',x:120,y:200,f:'700 28px Manrope',c:WHITE},
+      {t:'A right-angled triangle \u2014 sharp, directional, aggressive. It represents Intercept cutting into established workflows. The hypotenuse is the line of disruption.',x:120,y:258,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'The Glitch',x:120,y:385,f:'700 28px Manrope',c:WHITE},
+      {t:'Horizontal scan lines, color channel offsets, pixel displacement \u2014 the controlled chaos of a system being hacked. Each glitch is procedurally generated, making every application unique.',x:120,y:443,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'The Message',x:120,y:570,f:'700 28px Manrope',c:WHITE},
+      {t:"In a world of polished, predictable B2B brands, Fritz says: we\u2019re not here to fit in. We\u2019re here to break the pattern and reveal what\u2019s underneath. The aesthetic is confrontational by design.",x:120,y:628,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+      {t:'Motion & Animation',x:120,y:760,f:'700 28px Manrope',c:WHITE},
+      {t:'Animated, the glitch effects pulse and shift \u2014 scan lines roll, colors separate and recombine, shapes fragment and reassemble. The brand feels alive, unstable in the most compelling way.',x:120,y:818,f:'300 20px "IBM Plex Sans"',c:MUTED,lh:1.5,mw:820},
+    ],
+    rules:[],
+    video:'assets/video/fritz-system.webm',
+  },
+  // ─── SLIDE 15b: Fritz Lockup Compositions — Pencil PNG export ───
+  { label:'15b — Fritz Lockups', bg:'#0A0A0F', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-fritz-lockups.png',
+  },
+  // ─── SLIDE 15c: Fritz Swag — Pencil PNG export ───
+  { label:'15c — Fritz Swag', bg:'#0A0A0F', noAnim:true,
+    texts:[], rules:[],
+    bgImg:'assets/slides/pencil-fritz-swag.png',
+  },
+  // ─── SLIDE 16: Round-Up — three concept lockup videos ───
+  { label:'16 — Round-Up', bg:'#FFFFFF', noAnim:true,
+    texts:[
+      {t:'ROUND-UP',x:120,y:50,f:'600 14px "IBM Plex Sans"',c:GOLD,ls:'4px'},
+      {t:'Fields',x:280,y:950,f:'800 14px Manrope',c:'#2A2825'},
+      {t:'Quads',x:920,y:950,f:'800 14px Manrope',c:'#2A2825',z:3},
+      {t:'Fritz',x:1560,y:950,f:'800 14px Manrope',c:'#F0EEEB',z:3},
+    ],
+    divs:[
+      {x:640,y:0,w:640,h:1080,bg:'#F8F6F3'},
+      {x:1280,y:0,w:640,h:1080,bg:'#000000'},
+    ],
+    vids:[
+      {src:'assets/video/fields-lockup.webm',x:80,y:270,w:480},
+      {src:'assets/video/quads-lockup.webm',x:720,y:200,w:480,bg:'#F8F6F3'},
+      {src:'assets/video/fritz-lockup.webm',x:1360,y:200,w:480,bg:'#000000'},
+    ],
+    rules:[],
+  },
+  // ─── SLIDE 17: Fields — Full Page Lockup ───
+  { label:'17 — Fields Lockup', bg:'#FFFFFF', noAnim:true,
+    texts:[],
+    vids:[
+      {src:'assets/video/fields-lockup.webm',x:480,y:180,w:960},
+    ],
+    rules:[],
+  },
+  // ─── SLIDE 18: Quads — Full Page Lockup ───
+  { label:'18 — Quads Lockup', bg:'#F8F6F3', noAnim:true,
+    texts:[],
+    vids:[
+      {src:'assets/video/quads-lockup.webm',x:480,y:40,w:960,bg:'#F8F6F3'},
+    ],
+    rules:[],
+  },
+  // ─── SLIDE 19: Fritz — Full Page Lockup ───
+  { label:'19 — Fritz Lockup', bg:'#000000', noAnim:true,
+    texts:[],
+    vids:[
+      {src:'assets/video/fritz-lockup.webm',x:480,y:40,w:960,bg:'#000000'},
+    ],
+    rules:[],
+  },
+];
+
+// ═══════════════════════════════════════
+// BUILD DOM — canvas + text overlay per slide
+// ═══════════════════════════════════════
+const root = document.getElementById('slides');
+const contexts = [];
+
+slides.forEach((s, i) => {
+  const wrap = document.createElement('div');
+  wrap.className = 'slide-wrap';
+
+  // For bgImg slides, use the image directly instead of a canvas
+  if (s.bgImg) {
+    const img = document.createElement('img');
+    img.src = s.bgImg;
+    img.width = W; img.height = H;
+    img.className = 'slide-img';
+    img.style.cssText = 'display:block;width:100%;height:auto;';
+    wrap.appendChild(img);
+    const tl = document.createElement('div');
+    tl.className = 'text-layer';
+    const ctr = document.createElement('div');
+    ctr.className = 'slide-ctr';
+    ctr.textContent = `${i + 1} / ${slides.length}`;
+    ctr.style.cssText = `right:40px;bottom:32px;font:400 10px "IBM Plex Mono",monospace;letter-spacing:1px;color:#B8B0A8;`;
+    tl.appendChild(ctr);
+    wrap.appendChild(tl);
+    root.appendChild(wrap);
+    return; // skip canvas/text/anim setup
+  }
+
+  // Canvas — always created for bg fill, but noAnim slides get static bg only
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  wrap.appendChild(canvas);
+
+  // For noAnim slides, just fill the bg once
+  if (s.noAnim) {
+    const c = canvas.getContext('2d');
+    c.fillStyle = s.bg || BG;
+    c.fillRect(0, 0, W, H);
+  }
+
+  // Text layer
+  const tl = document.createElement('div');
+  tl.className = 'text-layer';
+
+  s.texts.forEach(t => {
+    const el = document.createElement('div');
+    el.textContent = t.t;
+    let css = `left:${t.x}px;top:${t.y}px;font:${t.f};color:${t.c};`;
+    if (t.ls) css += `letter-spacing:${t.ls};`;
+    if (t.lh) css += `line-height:${t.lh};`;
+    if (t.mw) css += `max-width:${t.mw}px;white-space:normal;`;
+    if (t.rot) css += `transform:rotate(${t.rot}deg);transform-origin:left center;`;
+    if (t.z) css += `z-index:${t.z};`;
+    el.style.cssText = css;
+    tl.appendChild(el);
+  });
+  // Positioned images (lockups etc)
+  (s.imgs||[]).forEach(im => {
+    const el = document.createElement('img');
+    el.src = im.src;
+    el.style.cssText = `left:${im.x}px;top:${im.y}px;width:${im.w}px;height:auto;`;
+    tl.appendChild(el);
+  });
+  // Background divs (colored columns etc) — z-index:1 behind videos
+  (s.divs||[]).forEach(d => {
+    const el = document.createElement('div');
+    el.style.cssText = `left:${d.x}px;top:${d.y}px;width:${d.w}px;height:${d.h}px;background:${d.bg};z-index:1;`;
+    tl.insertBefore(el, tl.firstChild);
+  });
+  // Positioned videos (lockup animations) — z-index above bg divs
+  (s.vids||[]).forEach(v => {
+    const el = document.createElement('video');
+    el.src = v.src; el.autoplay = true; el.loop = true; el.muted = true; el.playsInline = true;
+    el.style.cssText = `left:${v.x}px;top:${v.y}px;width:${v.w}px;height:auto;pointer-events:none;position:absolute;z-index:2;${v.bg?'background:'+v.bg+';':''}`;
+    tl.appendChild(el);
+  });
+  (s.rules||[]).forEach(r => {
+    const el = document.createElement('div');
+    el.style.cssText = `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:1px;background:${r.c};`;
+    tl.appendChild(el);
+  });
+  (s.vrules||[]).forEach(r => {
+    const el = document.createElement('div');
+    el.style.cssText = `left:${r.x}px;top:${r.y}px;width:1px;height:${r.h}px;background:${r.c};`;
+    tl.appendChild(el);
+  });
+
+  // Video background (if specified)
+  // Audio (concept scores — play on scroll into view, pause canvas until loaded)
+  if (s.audio) {
+    const aud = document.createElement('audio');
+    aud.src = s.audio;
+    aud.loop = true;
+    aud.volume = 0.0625;
+    aud.preload = 'auto';
+    aud.dataset.slideAudio = 'true';
+    aud.dataset.slideIdx = i;
+    wrap.appendChild(aud);
+  }
+
+  if (s.video) {
+    const vid = document.createElement('video');
+    vid.src = s.video;
+    vid.autoplay = true; vid.loop = true; vid.muted = true; vid.playsInline = true;
+    vid.style.cssText = 'position:absolute;right:40px;top:50%;transform:translateY(-50%);height:80%;width:auto;pointer-events:none;opacity:0.85;';
+    tl.appendChild(vid);
+  }
+
+  // Slide counter inside canvas area
+  const ctr = document.createElement('div');
+  ctr.className = 'slide-ctr';
+  ctr.textContent = `${i + 1} / ${slides.length}`;
+  const isLight = s.bg === '#FFFFFF' || s.bg === '#F5EDE8' || s.bg === '#F5F0E8';
+  ctr.style.cssText = `right:40px;bottom:32px;font:400 10px "IBM Plex Mono",monospace;letter-spacing:1px;color:${isLight ? '#B8B0A8' : '#3A3630'};`;
+  tl.appendChild(ctr);
+
+  wrap.appendChild(tl);
+  root.appendChild(wrap);
+
+  if (!s.noAnim) {
+    contexts.push({ ctx: canvas.getContext('2d'), zone: s.animZone, wrap, bg: s.bg || BG, idx: i });
+  }
+});
+
+// ─── Scale to viewport (edge-to-edge, no margin) ───
+let currentScale = 1;
+function resize() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const scaleW = vw / W;
+  const scaleH = vh / H;
+  const scale = Math.min(scaleW, scaleH);
+  currentScale = scale;
+  document.querySelectorAll('.slide-wrap').forEach(w => {
+    w.style.width = '100%';
+    w.style.minHeight = (H * scale) + 'px';
+    const canvas = w.querySelector('canvas');
+    const img = w.querySelector('.slide-img');
+    const content = canvas || img;
+    content.style.width = (W * scale) + 'px';
+    content.style.height = (H * scale) + 'px';
+    const tl = w.querySelector('.text-layer');
+    if (tl) tl.style.transform = `scale(${scale})`;
+    const offsetX = (vw - W * scale) / 2;
+    if (tl) tl.style.left = offsetX + 'px';
+    content.style.marginLeft = offsetX + 'px';
+  });
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ─── Keyboard navigation ───
+const allSlides = document.querySelectorAll('.slide-wrap');
+const counter = document.getElementById('slideCounter');
+let currentSlide = 0;
+
+function goToSlide(idx) {
+  idx = Math.max(0, Math.min(idx, allSlides.length - 1));
+  currentSlide = idx;
+  allSlides[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  counter.textContent = `${idx + 1} / ${allSlides.length}`;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault(); goToSlide(currentSlide + 1);
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+    e.preventDefault(); goToSlide(currentSlide - 1);
+  } else if (e.key === 'Home') {
+    e.preventDefault(); goToSlide(0);
+  } else if (e.key === 'End') {
+    e.preventDefault(); goToSlide(allSlides.length - 1);
+  }
+});
+
+
+// Track which slides have audio loaded and are ready
+const audioReady = {};
+document.querySelectorAll('audio[data-slide-audio]').forEach(aud => {
+  const idx = parseInt(aud.dataset.slideIdx);
+  audioReady[idx] = false;
+  aud.addEventListener('canplaythrough', () => { audioReady[idx] = true; }, {once:true});
+});
+
+// Update counter on scroll + audio play/pause
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const idx = Array.from(allSlides).indexOf(e.target);
+    if (e.isIntersecting && e.intersectionRatio > 0.5) {
+      if (idx >= 0) { currentSlide = idx; counter.textContent = `${idx + 1} / ${allSlides.length}`; }
+      const aud = e.target.querySelector('audio[data-slide-audio]');
+      if (aud) {
+        if (aud.readyState >= 4) {
+          aud.play().catch(()=>{});
+        } else {
+          // Wait for audio to load, then play + start animation
+          aud.addEventListener('canplaythrough', () => { aud.play().catch(()=>{}); }, {once:true});
+        }
+      }
+    } else {
+      const aud = e.target.querySelector('audio[data-slide-audio]');
+      if (aud) { aud.pause(); aud.currentTime = 0; }
+    }
+  });
+}, { threshold: 0.5 });
+allSlides.forEach(s => observer.observe(s));
+
+// On first user interaction, try playing any audio on currently visible slides
+// (browsers block autoplay until user interacts)
+document.addEventListener('click', function kickAudio(){
+  document.removeEventListener('click', kickAudio);
+  allSlides.forEach(sl => {
+    const rect = sl.getBoundingClientRect();
+    const visible = rect.top < window.innerHeight && rect.bottom > 0;
+    if (visible) {
+      const aud = sl.querySelector('audio[data-slide-audio]');
+      if (aud) aud.play().catch(()=>{});
+    }
+  });
+}, {once:true});
+
+// Also try on first scroll in case they scroll before clicking
+document.addEventListener('scroll', function kickAudioScroll(){
+  document.removeEventListener('scroll', kickAudioScroll);
+  allSlides.forEach(sl => {
+    const rect = sl.getBoundingClientRect();
+    const visible = rect.top < window.innerHeight*.7 && rect.bottom > window.innerHeight*.3;
+    if (visible) {
+      const aud = sl.querySelector('audio[data-slide-audio]');
+      if (aud) aud.play().catch(()=>{});
+    }
+  });
+}, {once:true});
+
+// ═══════════════════════════════════════
+// ANIMATION ENGINES
+// Each draws BG + particles on the canvas
+// Particles confined to animZone
+// ═══════════════════════════════════════
+
+// ── 1. Drift Swarm ──
+function mkSwarm(z) {
+  const n = N[0], count = 200, ps = [];
+  for (let i = 0; i < count; i++) ps.push({ x:z.x+Math.random()*z.w, y:z.y+Math.random()*z.h, vx:0,vy:0, sz:1.5+Math.random()*2, c:Math.random()>.8?wRgb:gRgb, a:.12+Math.random()*.5 });
+  return function(ctx, t) {
+    const tm = t * .0003;
+    for (const p of ps) {
+      const ang = n.n(p.x*.0012+tm, p.y*.0012) * Math.PI*2;
+      p.vx += Math.cos(ang)*.06; p.vy += Math.sin(ang)*.06;
+      p.vx *= .97; p.vy *= .97; p.x += p.vx; p.y += p.vy;
+      if(p.x<z.x-10)p.x=z.x+z.w; if(p.x>z.x+z.w+10)p.x=z.x;
+      if(p.y<z.y-10)p.y=z.y+z.h; if(p.y>z.y+z.h+10)p.y=z.y;
+      const pulse = .7 + .3*Math.sin(t*.001+p.x*.003);
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.sz,0,Math.PI*2);
+      ctx.fillStyle = rgba(p.c, p.a*pulse); ctx.fill();
+    }
+    ctx.lineWidth = .4;
+    for (let i=0;i<count;i++) for (let j=i+1;j<count;j++) {
+      const dx=ps[i].x-ps[j].x, dy=ps[i].y-ps[j].y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<70){ctx.strokeStyle=rgba(gRgb,.05*(1-d/70));ctx.beginPath();ctx.moveTo(ps[i].x,ps[i].y);ctx.lineTo(ps[j].x,ps[j].y);ctx.stroke();}
+    }
+  };
+}
+
+// ── 2. Grid Pulse ──
+function mkGrid(z) {
+  const n=N[1], cols=14, rows=28, sx=z.w/(cols+1), sy=z.h/(rows+1), dots=[];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) dots.push({hx:z.x+(c+1)*sx,hy:z.y+(r+1)*sy,ph:Math.random()*Math.PI*2,fr:.3+Math.random()*.7});
+  return function(ctx,t){
+    const tm=t*.0004;
+    for(const d of dots){
+      const wave=Math.sin(d.hx*.008+d.hy*.004-tm*2.5);
+      const dis=Math.max(0,wave)*Math.sin(tm*d.fr+d.ph);
+      const ox=dis*10*n.n(d.hx*.006+tm,d.hy*.006);
+      const oy=dis*10*n.n(d.hx*.006,d.hy*.006+tm);
+      const a=.1+Math.abs(dis)*.4, sz=1.5+Math.abs(dis)*1.5;
+      const c=Math.abs(dis)>.3?gRgb:mRgb;
+      ctx.beginPath();ctx.arc(d.hx+ox,d.hy+oy,sz,0,Math.PI*2);
+      ctx.fillStyle=rgba(c,a);ctx.fill();
+    }
+  };
+}
+
+// ── 3. Convergence ──
+function mkConv(z) {
+  const fx=z.x+z.w*.35,fy=z.y+z.h*.45;
+  const streams=[{ox:z.x+z.w*.95,oy:z.y+z.h*.05,c:gRgb},{ox:z.x+z.w*.9,oy:z.y+z.h*.95,c:wRgb},{ox:z.x+z.w*.05,oy:z.y+z.h*.8,c:gRgb}];
+  const count=150,ps=[];
+  for(let i=0;i<count;i++) ps.push({s:i%3,pr:Math.random(),off:(Math.random()-.5)*50,sp:.00008+Math.random()*.00012,sz:1+Math.random()*2,a:.1+Math.random()*.45});
+  return function(ctx,t){
+    const grad=ctx.createRadialGradient(fx,fy,0,fx,fy,100);
+    grad.addColorStop(0,rgba(gRgb,.05));grad.addColorStop(1,rgba(gRgb,0));
+    ctx.fillStyle=grad;ctx.fillRect(z.x,z.y,z.w,z.h);
+    for(const p of ps){
+      p.pr+=p.sp*(1+Math.sin(t*.0005)*.3);if(p.pr>1)p.pr=0;
+      const s=streams[p.s],e=p.pr*p.pr;
+      const bx=s.ox+(fx-s.ox)*e,by=s.oy+(fy-s.oy)*e;
+      const dx=fx-s.ox,dy=fy-s.oy,ln=Math.sqrt(dx*dx+dy*dy);
+      const nx=-dy/ln,ny=dx/ln,nr=1-e*.85;
+      const wb=Math.sin(t*.001+p.pr*8)*4;
+      const x=bx+(nx*p.off+wb)*nr,y=by+(ny*p.off+wb*.5)*nr;
+      ctx.beginPath();ctx.arc(x,y,p.sz*(.5+e*.5),0,Math.PI*2);
+      ctx.fillStyle=rgba(s.c,p.a*(.3+e*.7));ctx.fill();
+    }
+  };
+}
+
+// ── 4. Phase Transition ──
+function mkPhase(z) {
+  const n=N[3],cols=20,rows=12,dots=[];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) dots.push({hx:z.x+30+c*(z.w-60)/(cols-1),hy:z.y+30+r*(z.h-60)/(rows-1),ph:Math.random()*Math.PI*2});
+  return function(ctx,t){
+    const cy=(Math.sin(t*.0003)+1)/2;
+    for(const d of dots){
+      const xr=(d.hx-z.x)/z.w;
+      const chaos=xr<.5?cy:(1-cy), na=chaos*35;
+      const nx=n.n(d.hx*.01+t*.0002,d.hy*.01)*na;
+      const ny=n.n(d.hx*.01,d.hy*.01+t*.0002)*na;
+      const a=xr<.5?(.3-cy*.15):(.15+cy*.4);
+      const c=xr<.5?mRgb:gRgb;
+      ctx.beginPath();ctx.arc(d.hx+nx,d.hy+ny,1.5+chaos,0,Math.PI*2);
+      ctx.fillStyle=rgba(c,a);ctx.fill();
+    }
+  };
+}
+
+// ── 5. Network Nodes ──
+function mkNet(z) {
+  const n=N[4];
+  const cls=[{cx:z.x+z.w*.17,cy:z.y+z.h*.5,ct:25,r:100},{cx:z.x+z.w*.50,cy:z.y+z.h*.5,ct:25,r:100},{cx:z.x+z.w*.83,cy:z.y+z.h*.5,ct:25,r:100}];
+  const nodes=[];
+  cls.forEach((cl,ci)=>{for(let i=0;i<cl.ct;i++){const a=Math.random()*Math.PI*2,d=Math.random()*cl.r;nodes.push({hx:cl.cx+Math.cos(a)*d,hy:cl.cy+Math.sin(a)*d,x:0,y:0,sz:1.5+Math.random()*2,a:.15+Math.random()*.45,c:Math.random()>.7?wRgb:gRgb,ph:Math.random()*Math.PI*2,ci});}});
+  return function(ctx,t){
+    const tm=t*.0004;
+    for(const nd of nodes){nd.x=nd.hx+Math.sin(tm+nd.ph)*6+n.n(nd.hx*.004+tm,nd.hy*.004)*10;nd.y=nd.hy+Math.cos(tm*.8+nd.ph)*5+n.n(nd.hx*.004,nd.hy*.004+tm)*8;}
+    ctx.lineWidth=.4;
+    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
+      if(nodes[i].ci!==nodes[j].ci)continue;
+      const dx=nodes[i].x-nodes[j].x,dy=nodes[i].y-nodes[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<80){ctx.strokeStyle=rgba(gRgb,.05*(1-d/80));ctx.beginPath();ctx.moveTo(nodes[i].x,nodes[i].y);ctx.lineTo(nodes[j].x,nodes[j].y);ctx.stroke();}
+    }
+    for(let ci=0;ci<cls.length;ci++) for(let cj=ci+1;cj<cls.length;cj++){
+      const pulse=.5+.5*Math.sin(tm*1.5+ci*2);
+      const a=nodes.find(nd=>nd.ci===ci),b=nodes.find(nd=>nd.ci===cj);
+      if(a&&b){ctx.strokeStyle=rgba(gRgb,.025*pulse);ctx.setLineDash([4,8]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.setLineDash([]);}
+    }
+    for(const nd of nodes){const pulse=.7+.3*Math.sin(t*.002+nd.ph);ctx.beginPath();ctx.arc(nd.x,nd.y,nd.sz,0,Math.PI*2);ctx.fillStyle=rgba(nd.c,nd.a*pulse);ctx.fill();}
+  };
+}
+
+// ── 6. Active Visual Field — bright flowing particles with attractors ──
+function mkNoise(z) {
+  const n=N[5],count=600,ps=[];
+  for(let i=0;i<count;i++){
+    const isGold=Math.random()>.4;const isWhite=!isGold&&Math.random()>.4;
+    ps.push({x:z.x+Math.random()*z.w,y:z.y+Math.random()*z.h,
+      sz:isGold?4+Math.random()*5:3+Math.random()*4,
+      a:isGold?.6+Math.random()*.4:.35+Math.random()*.4,
+      c:isGold?gRgb:(isWhite?wRgb:mRgb),ph:Math.random()*Math.PI*2,
+      vx:0,vy:0,trail:isGold});
+  }
+  const att=[{ox:.25,oy:.25,r:300,s:.25},{ox:.75,oy:.55,r:320,s:.2},{ox:.45,oy:.8,r:280,s:.18},{ox:.6,oy:.15,r:250,s:.15}];
+  return function(ctx,t){
+    const tm=t*.0004;
+    const atp=att.map((a,i)=>({x:z.x+z.w*(a.ox+Math.sin(tm*(1.2+i*.4)+i*2)*.18),y:z.y+z.h*(a.oy+Math.cos(tm*(.9+i*.3)+i*3)*.18),r:a.r,s:a.s}));
+    for(const p of ps){
+      const ang=n.n(p.x*.0006+tm,p.y*.0006+tm*.5)*Math.PI*4;
+      let fx=Math.cos(ang)*2.5,fy=Math.sin(ang)*2.5;
+      for(const at of atp){const dx=at.x-p.x,dy=at.y-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<at.r&&d>8){const f=at.s*(1-d/at.r);fx+=dx/d*f*60;fy+=dy/d*f*60;}}
+      p.vx=p.vx*.9+fx*.1;p.vy=p.vy*.9+fy*.1;
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<z.x-30)p.x=z.x+z.w+15;if(p.x>z.x+z.w+30)p.x=z.x-15;
+      if(p.y<z.y-30)p.y=z.y+z.h+15;if(p.y>z.y+z.h+30)p.y=z.y-15;
+      const pulse=.7+.3*Math.sin(t*.0012+p.ph);
+      const speed=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+      const sz=p.sz*(1+speed*.06);
+      if(p.trail&&speed>.8){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x-p.vx*4,p.y-p.vy*4);ctx.strokeStyle=rgba(gRgb,p.a*.4*pulse);ctx.lineWidth=sz*.7;ctx.stroke();}
+      ctx.beginPath();ctx.arc(p.x,p.y,sz,0,Math.PI*2);ctx.fillStyle=rgba(p.c,p.a*pulse);ctx.fill();
+    }
+    ctx.lineWidth=1;
+    // Skip every other to keep perf with 600 particles, but check more pairs
+    for(let i=0;i<count;i+=1) for(let j=i+1;j<Math.min(i+40,count);j++){
+      const dx=ps[i].x-ps[j].x,dy=ps[i].y-ps[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){const a=.2*(1-d/120);ctx.strokeStyle=rgba((ps[i].c===gRgb||ps[j].c===gRgb)?gRgb:wRgb,a);ctx.beginPath();ctx.moveTo(ps[i].x,ps[i].y);ctx.lineTo(ps[j].x,ps[j].y);ctx.stroke();}
+    }
+    for(const at of atp){const gr=ctx.createRadialGradient(at.x,at.y,0,at.x,at.y,at.r*.6);gr.addColorStop(0,rgba(gRgb,.12));gr.addColorStop(.5,rgba(gRgb,.04));gr.addColorStop(1,rgba(gRgb,0));ctx.fillStyle=gr;ctx.fillRect(z.x,z.y,z.w,z.h);}
+  };
+}
+
+// ── Light palette particle colors ──
+const ltDark = hexToRgb('#2A2825');
+const ltMid = hexToRgb('#B8A898');
+const ltAccent = hexToRgb('#C9A962');
+
+// ── 7. Counter-Rotating 3D Wireframe Cubes ──
+function mkCubes(z) {
+  const cx=z.x+z.w*.5, cy=z.y+z.h*.5;
+  const S=Math.min(z.w,z.h)*.3; // outer cube size
+  const Si=S*.55; // inner cube size
+  // Project 3D point to 2D (simple perspective)
+  function proj(x,y,z3d,scale){
+    const f=600;const pz=f+z3d;
+    return {x:cx+(x*f/pz)*scale, y:cy+(y*f/pz)*scale};
+  }
+  // Rotate point around Y then X axis
+  function rot(x,y,z,ry,rx){
+    let x1=x*Math.cos(ry)-z*Math.sin(ry), z1=x*Math.sin(ry)+z*Math.cos(ry);
+    let y1=y*Math.cos(rx)-z1*Math.sin(rx), z2=y*Math.sin(rx)+z1*Math.cos(rx);
+    return{x:x1,y:y1,z:z2};
+  }
+  const edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  const verts=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+
+  return function(ctx,t){
+    const tm=t*.0004;
+    // Outer cube — rotates clockwise
+    const ryO=tm*.7, rxO=tm*.4;
+    ctx.lineWidth=1.5;
+    for(const e of edges){
+      const a=rot(verts[e[0]][0]*S,verts[e[0]][1]*S,verts[e[0]][2]*S,ryO,rxO);
+      const b=rot(verts[e[1]][0]*S,verts[e[1]][1]*S,verts[e[1]][2]*S,ryO,rxO);
+      const pa=proj(a.x,a.y,a.z,1), pb=proj(b.x,b.y,b.z,1);
+      const depthA=(a.z+S)/(2*S), depthB=(b.z+S)/(2*S);
+      const alpha=.08+Math.min(depthA,depthB)*.12;
+      ctx.strokeStyle=rgba(ltDark,alpha);
+      ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();
+    }
+    // Vertex dots — outer
+    for(const v of verts){
+      const r=rot(v[0]*S,v[1]*S,v[2]*S,ryO,rxO);
+      const p=proj(r.x,r.y,r.z,1);
+      const depth=(r.z+S)/(2*S);
+      ctx.beginPath();ctx.arc(p.x,p.y,2+depth*2,0,Math.PI*2);
+      ctx.fillStyle=rgba(ltAccent,.1+depth*.15);ctx.fill();
+    }
+    // Inner cube — rotates counter-clockwise, different axis tilt
+    const ryI=-tm*.5, rxI=-tm*.65;
+    ctx.lineWidth=1;
+    for(const e of edges){
+      const a=rot(verts[e[0]][0]*Si,verts[e[0]][1]*Si,verts[e[0]][2]*Si,ryI,rxI);
+      const b=rot(verts[e[1]][0]*Si,verts[e[1]][1]*Si,verts[e[1]][2]*Si,ryI,rxI);
+      const pa=proj(a.x,a.y,a.z,1), pb=proj(b.x,b.y,b.z,1);
+      const depthA=(a.z+Si)/(2*Si), depthB=(b.z+Si)/(2*Si);
+      const alpha=.06+Math.min(depthA,depthB)*.14;
+      ctx.strokeStyle=rgba(ltAccent,alpha);
+      ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(pb.x,pb.y);ctx.stroke();
+    }
+    // Vertex dots — inner
+    for(const v of verts){
+      const r=rot(v[0]*Si,v[1]*Si,v[2]*Si,ryI,rxI);
+      const p=proj(r.x,r.y,r.z,1);
+      const depth=(r.z+Si)/(2*Si);
+      ctx.beginPath();ctx.arc(p.x,p.y,1.5+depth*1.5,0,Math.PI*2);
+      ctx.fillStyle=rgba(ltDark,.08+depth*.12);ctx.fill();
+    }
+  };
+}
+
+// ── 8. Pattern Grid — MUCH STRONGER visibility ──
+function mkPatternGrid(z) {
+  const n=N[1];
+  const cols=8,rows=12;
+  const cellW=z.w/cols,cellH=z.h/rows;
+  const cells=[];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) cells.push({x:z.x+c*cellW,y:z.y+r*cellH,seed:r*cols+c,phase:Math.random()*Math.PI*2});
+  return function(ctx,t){
+    const tm=t*.0003;
+    for(const cell of cells){
+      const cx=cell.x+cellW/2, cy=cell.y+cellH/2;
+      const s=cell.seed;
+      const pulse=.5+.5*Math.sin(tm*2+cell.phase);
+      const alpha=.12+pulse*.18;
+      const type=s%5;
+      const rot=tm+cell.phase;
+      const sz=Math.min(cellW,cellH)*.35;
+      const color=s%3===0?ltAccent:(s%3===1?ltMid:ltDark);
+      ctx.strokeStyle=rgba(color,alpha);ctx.lineWidth=1.8;
+      ctx.fillStyle=rgba(color,alpha*.6);
+      if(type===0){
+        ctx.beginPath();ctx.arc(cx,cy,sz,rot,rot+Math.PI/2);ctx.stroke();
+        ctx.beginPath();ctx.arc(cx,cy,sz*.5,rot+Math.PI,rot+Math.PI*1.5);ctx.stroke();
+      }else if(type===1){
+        ctx.beginPath();ctx.moveTo(cx-sz*.7,cy);ctx.lineTo(cx+sz*.7,cy);ctx.moveTo(cx,cy-sz*.7);ctx.lineTo(cx,cy+sz*.7);ctx.stroke();
+      }else if(type===2){
+        ctx.beginPath();ctx.moveTo(cx,cy-sz);ctx.lineTo(cx+sz*.65,cy);ctx.lineTo(cx,cy+sz);ctx.lineTo(cx-sz*.65,cy);ctx.closePath();ctx.stroke();
+      }else if(type===3){
+        for(let i=0;i<4;i++){const a=rot+i*Math.PI/2;ctx.beginPath();ctx.arc(cx+Math.cos(a)*sz*.45,cy+Math.sin(a)*sz*.45,3.5,0,Math.PI*2);ctx.fill();}
+      }else{
+        ctx.beginPath();ctx.arc(cx,cy,sz*.4,rot,rot+Math.PI);ctx.stroke();
+        ctx.beginPath();ctx.arc(cx,cy,sz*.7,rot+Math.PI,rot+Math.PI*2);ctx.stroke();
+        ctx.beginPath();ctx.arc(cx,cy,sz,rot,rot+Math.PI*.5);ctx.stroke();
+      }
+      // Cell border hint
+      ctx.strokeStyle=rgba(ltMid,.03);ctx.lineWidth=.5;
+      ctx.strokeRect(cell.x+4,cell.y+4,cellW-8,cellH-8);
+    }
+  };
+}
+
+// ── 9. Triple Sine Waves with shading ──
+function mkTripleSine(z) {
+  // Three sine waves with different frequencies, amplitudes, phases
+  const waves=[
+    {freq:.008, amp:z.h*.28, phase:0,     speed:.0004, color:ltDark,  alpha:.12, width:2},
+    {freq:.012, amp:z.h*.22, phase:2.1,   speed:.0003, color:ltAccent,alpha:.10, width:1.8},
+    {freq:.006, amp:z.h*.32, phase:4.2,   speed:.00055,color:ltMid,   alpha:.09, width:1.5},
+  ];
+  const midY=z.y+z.h*.5;
+
+  return function(ctx,t){
+    // Draw shaded fill between wave pairs first (subtle)
+    for(let pair=0;pair<2;pair++){
+      const wA=waves[pair], wB=waves[pair+1];
+      const tmA=t*wA.speed, tmB=t*wB.speed;
+      ctx.beginPath();
+      // Top edge: wave A
+      for(let x=z.x;x<=z.x+z.w;x+=3){
+        const yA=midY+Math.sin(x*wA.freq+tmA+wA.phase)*wA.amp+Math.sin(x*wA.freq*2.3+tmA*1.4)*wA.amp*.2;
+        if(x===z.x)ctx.moveTo(x,yA);else ctx.lineTo(x,yA);
+      }
+      // Bottom edge: wave B (reversed)
+      for(let x=z.x+z.w;x>=z.x;x-=3){
+        const yB=midY+Math.sin(x*wB.freq+tmB+wB.phase)*wB.amp+Math.sin(x*wB.freq*2.3+tmB*1.4)*wB.amp*.2;
+        ctx.lineTo(x,yB);
+      }
+      ctx.closePath();
+      const grad=ctx.createLinearGradient(z.x,midY-z.h*.3,z.x,midY+z.h*.3);
+      const shadeColor=pair===0?ltDark:ltAccent;
+      grad.addColorStop(0,rgba(shadeColor,.0));
+      grad.addColorStop(.5,rgba(shadeColor,.04));
+      grad.addColorStop(1,rgba(shadeColor,.0));
+      ctx.fillStyle=grad;ctx.fill();
+    }
+
+    // Draw the three wave strokes
+    for(const w of waves){
+      const tm=t*w.speed;
+      ctx.beginPath();
+      for(let x=z.x;x<=z.x+z.w;x+=2){
+        // Main sine + harmonic overtone for organic feel
+        const y=midY+Math.sin(x*w.freq+tm+w.phase)*w.amp+Math.sin(x*w.freq*2.3+tm*1.4+w.phase*.7)*w.amp*.2;
+        if(x===z.x)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle=rgba(w.color,w.alpha);
+      ctx.lineWidth=w.width;
+      ctx.stroke();
+    }
+
+    // Intersection highlight dots where waves cross
+    const tm0=t*waves[0].speed, tm1=t*waves[1].speed, tm2=t*waves[2].speed;
+    for(let x=z.x;x<=z.x+z.w;x+=8){
+      const y0=midY+Math.sin(x*waves[0].freq+tm0+waves[0].phase)*waves[0].amp+Math.sin(x*waves[0].freq*2.3+tm0*1.4)*waves[0].amp*.2;
+      const y1=midY+Math.sin(x*waves[1].freq+tm1+waves[1].phase)*waves[1].amp+Math.sin(x*waves[1].freq*2.3+tm1*1.4+waves[1].phase*.7)*waves[1].amp*.2;
+      const y2=midY+Math.sin(x*waves[2].freq+tm2+waves[2].phase)*waves[2].amp+Math.sin(x*waves[2].freq*2.3+tm2*1.4+waves[2].phase*.7)*waves[2].amp*.2;
+      // Check if any two waves are close
+      if(Math.abs(y0-y1)<12){ctx.beginPath();ctx.arc(x,(y0+y1)/2,2.5,0,Math.PI*2);ctx.fillStyle=rgba(ltAccent,.18);ctx.fill();}
+      if(Math.abs(y1-y2)<12){ctx.beginPath();ctx.arc(x,(y1+y2)/2,2,0,Math.PI*2);ctx.fillStyle=rgba(ltDark,.14);ctx.fill();}
+      if(Math.abs(y0-y2)<12){ctx.beginPath();ctx.arc(x,(y0+y2)/2,2,0,Math.PI*2);ctx.fillStyle=rgba(ltMid,.14);ctx.fill();}
+    }
+
+    // Left-edge fade: gradient overlay matching bg, fully opaque at left → transparent at ~25% in
+    const fadeW=z.w*.25;
+    const fade=ctx.createLinearGradient(z.x,0,z.x+fadeW,0);
+    fade.addColorStop(0,'#F5EDE8');
+    fade.addColorStop(1,'rgba(245,237,232,0)');
+    ctx.fillStyle=fade;
+    ctx.fillRect(z.x,z.y,fadeW,z.h);
+  };
+}
+
+// ── White palette colors ──
+const wtDark=hexToRgb('#2A2825');
+const wtMid=hexToRgb('#C0B8B0');
+const wtGold=hexToRgb('#C9A962');
+
+// ── 10. Fields — Venn diagram (from Pencil: circles at 1120,317 and 1250,417) ──
+function mkFieldsDiag(z){
+  const n=N[0];
+  return function(ctx,t){
+    const tm=t*.00015;
+    const pulse=.97+.03*Math.sin(tm*3);
+    const R=100*pulse;
+    // Blue circle (algorithmic)
+    ctx.beginPath();ctx.arc(1220,417,R,0,Math.PI*2);
+    ctx.fillStyle='rgba(135,206,250,0.5)';ctx.fill();
+    // Pink circle (human)
+    ctx.beginPath();ctx.arc(1350,517,R,0,Math.PI*2);
+    ctx.fillStyle='rgba(240,128,128,0.5)';ctx.fill();
+  };
+}
+
+// ── 11. Fields System — Confluence Field enters from bottom-right ──
+function mkFieldsAnim(z){
+  function _sn(x,y,sd){const a=Math.sin(x*12.9898+y*78.233+sd)*43758.5453;return a-Math.floor(a)}
+  function _smN(x,y,sd){const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);return _sn(ix,iy,sd)*(1-sx)*(1-sy)+_sn(ix+1,iy,sd)*sx*(1-sy)+_sn(ix,iy+1,sd)*(1-sx)*sy+_sn(ix+1,iy+1,sd)*sx*sy}
+  function _fbm(x,y,sd){let v=0,a=1,f=1,tt=0;for(let i=0;i<4;i++){v+=_smN(x*f,y*f,sd+i*31.7)*a;tt+=a;a*=.5;f*=2}return v/tt}
+  function _mkB(R,nP,bl,sd,tm){const pts=[];for(let i=0;i<nP;i++){const ang=(i/nP)*Math.PI*2;const nv=_fbm(Math.cos(ang)*2+tm*.5,Math.sin(ang)*2+tm*.3,sd);const r=R*(1+(nv-.5)*bl*1.2);pts.push({x:Math.cos(ang)*r*1.15,y:Math.sin(ang)*r*.88})}return pts}
+  function _trB(c,pts){const nn=pts.length;c.beginPath();for(let i=0;i<nn;i++){const p0=pts[(i-1+nn)%nn],p1=pts[i],p2=pts[(i+1)%nn],p3=pts[(i+2)%nn];if(i===0)c.moveTo(p1.x,p1.y);c.bezierCurveTo(p1.x+(p2.x-p0.x)/6,p1.y+(p2.y-p0.y)/6,p2.x-(p3.x-p1.x)/6,p2.y-(p3.y-p1.y)/6,p2.x,p2.y)}c.closePath()}
+  // JSON export values
+  const seedA=158.281346555324, seedB=235.77290133846208;
+  const blobby=0.5, ptsN=8, sizeA=1, sizeB=1, opacity=0.9;
+  const morphSpd=0.3, wobble=0.3, depthSep=0.4, orbitSpd=0.5;
+
+  const fCx=z.x+z.w*.5, fCy=z.y+z.h*.45, fR=Math.min(z.w,z.h)*.28;
+  const sR=fR*2.8, sX=W+400, sY=H+350;
+  const eDur=30000; // very slow entrance — 30s
+
+  // Seamless loop: orbit = 0.15 rad/s in generator time.
+  const LOOP_S=Math.PI*2/0.15; // ~41.89 seconds
+
+  let startT=-1, lastAudTime=-1;
+  return function(ctx,t){
+    const aud=document.querySelector('audio[data-slide-idx="10"]');
+    const playing=aud&&!aud.paused;
+    if(playing){
+      // Detect audio restart (currentTime jumped back to near 0)
+      if(startT<0||aud.currentTime<lastAudTime-.5) startT=t;
+      lastAudTime=aud.currentTime;
+    } else {
+      // Audio paused — reset so next play triggers fresh entrance
+      startT=-1; lastAudTime=-1;
+    }
+    if(startT<0) return; // blank until audio plays (scroll to slide triggers it)
+    t=t-startT;
+    const genT=(t*.001)*orbitSpd; // ms→s
+
+    // Entrance: slow start, builds speed mid-journey, eases into landing
+    let cx2,cy2,R2;
+    if(t<eDur){
+      const p=Math.min(1,t/eDur);
+      // Very gentle throughout — sine ease, never fast
+      const ep=(1-Math.cos(p*Math.PI))/2; // sine ease in-out, symmetrical and smooth
+      cx2=sX+(fCx-sX)*ep; cy2=sY+(fCy-sY)*ep;
+      R2=sR+(fR-sR)*ep;
+    } else {
+      cx2=fCx; cy2=fCy; R2=fR;
+    }
+
+    // Seamless loop time for blob generation
+    const loopT=genT%LOOP_S;
+
+    // 3D tilt
+    const maxTilt=Math.PI/6;
+    const tiltY=Math.sin(loopT*.3)*maxTilt*wobble;
+    const tiltX=Math.sin(loopT*.2+1.3)*maxTilt*wobble*.7;
+    const fov=800;
+    function apply3D(pts,zBase){
+      return pts.map(p=>{
+        let x=p.x,y=p.y,z3=zBase;
+        const cy1=Math.cos(tiltY),sy=Math.sin(tiltY);
+        const x2=x*cy1+z3*sy, z2=-x*sy+z3*cy1;
+        const cx1=Math.cos(tiltX),sx=Math.sin(tiltX);
+        const y2=y*cx1-z2*sx, z3b=y*sx+z2*cx1;
+        const s=fov/(fov+z3b);
+        return{x:x2*s, y:y2*s};
+      });
+    }
+
+    // Generate blobs
+    const baseR=R2;
+    const sepAngle=loopT*0.15; // orbit
+    const avgR=baseR*(sizeA+sizeB)/2;
+    const sepDist=avgR*1.0;
+    const rPtsRaw=_mkB(baseR*sizeA,ptsN,blobby,seedA,loopT*morphSpd);
+    const bPtsRaw=_mkB(baseR*sizeB,ptsN,blobby,seedB,loopT*morphSpd);
+    const offX=Math.cos(sepAngle)*sepDist;
+    const offY=Math.sin(sepAngle)*sepDist*.4;
+    for(const p of rPtsRaw){p.x-=offX*.5;p.y-=offY*.5}
+    for(const p of bPtsRaw){p.x+=offX*.5;p.y+=offY*.5}
+
+    const zR=-depthSep*80, zB=depthSep*80;
+    const rPts=apply3D(rPtsRaw,zR);
+    const bPts=apply3D(bPtsRaw,zB);
+
+    // Draw coral blob
+    ctx.save();ctx.globalCompositeOperation='multiply';ctx.translate(cx2,cy2);
+    _trB(ctx,rPts);ctx.fillStyle='rgba(240,128,128,'+opacity+')';ctx.fill();ctx.restore();
+    // Draw sky blob
+    ctx.save();ctx.globalCompositeOperation='multiply';ctx.translate(cx2,cy2);
+    _trB(ctx,bPts);ctx.fillStyle='rgba(135,206,250,'+opacity+')';ctx.fill();ctx.restore();
+    // Intersection
+    ctx.save();ctx.translate(cx2,cy2);
+    _trB(ctx,rPts);ctx.clip();
+    _trB(ctx,bPts);ctx.fillStyle='rgba(155,139,167,'+(opacity*.7)+')';ctx.fill();ctx.restore();
+  };
+}
+
+// ── 12. Quads — diagram (from Pencil: circle at 1184,306,345x345) ──
+function mkQuadsDiag(z){
+  const cx=1357,cy=479,R=172;
+  return function(ctx,t){
+    const tm=t*.00015;
+    const pulse=.98+.02*Math.sin(tm*2);
+    const r=R*pulse;
+    // Background circle
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.fillStyle='#E0E0E0';ctx.fill();ctx.strokeStyle='#CCCCCC';ctx.lineWidth=1;ctx.stroke();
+    // Four quarter fills
+    const qc=[['#E54D2E60',-.5*Math.PI,0],['#3B82F660',0,.5*Math.PI],['#10B98160',.5*Math.PI,Math.PI],['#8B5CF660',Math.PI,1.5*Math.PI]];
+    for(const[col,s,e]of qc){ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,s,e);ctx.closePath();ctx.fillStyle=col;ctx.fill();}
+    // Cross lines
+    ctx.strokeStyle='#2A2825';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke();
+    // Center dot
+    ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);ctx.fillStyle='#2A2825';ctx.fill();
+  };
+}
+
+// ── 13. Quads System — circle-quad tetromino animation ──
+function mkQuadsAnim(z){
+  const cx=z.x+z.w*.5,cy=z.y+z.h*.45;
+  const QR=Math.min(z.w,z.h)*.11;
+  const QC=['#8B5CF6','#E54D2E','#3B82F6','#10B981'];
+  function cA(cx2,cy2,r){let x,y;switch(r){case 0:x=cx2;y=cy2;break;case 90:x=cx2+1;y=cy2;break;case 180:x=cx2+1;y=cy2+1;break;case 270:x=cx2;y=cy2+1;break}return{x,y,r}}
+  function mk(c){let x1=1e9,x2=-1e9,y1=1e9,y2=-1e9;for(const v of c){x1=Math.min(x1,v[0]);x2=Math.max(x2,v[0]+1);y1=Math.min(y1,v[1]);y2=Math.max(y2,v[1]+1)}const ox=(x1+x2)/2,oy=(y1+y2)/2;return c.map(v=>cA(v[0]-ox,v[1]-oy,v[2]))}
+  function la(a,b,t){let d=b-a;while(d>180)d-=360;while(d<-180)d+=360;return a+d*t}
+  const cfgs=[
+    mk([[0,0,180],[1,0,270],[1,1,0],[0,1,90]]),
+    mk([[0,0,270],[1,0,0],[1,1,90],[0,1,180]]),
+    mk([[0,0,0],[1,0,90],[1,1,180],[0,1,270]]),
+    mk([[0,0,90],[1,0,180],[1,1,270],[0,1,0]]),
+    mk([[0,0,0],[1,0,0],[1,1,0],[0,1,0]]),
+    mk([[0,0,270],[0,1,90],[0,2,270],[0,3,90]]),
+    mk([[0,0,180],[1,0,0],[2,0,180],[3,0,0]]),
+    mk([[0,0,180],[1,0,270],[2,0,0],[1,1,90]]),
+    mk([[0,0,270],[0,1,180],[0,2,90],[1,2,0]]),
+    mk([[1,0,180],[2,0,270],[0,1,90],[1,1,0]]),
+    mk([[0,0,180],[1,0,270],[1,1,0],[0,1,90]]),
+  ];
+  const HOLD=1.8,MOVE=0.9;
+  function dQ(c,px,py,r,col){c.save();c.translate(px,py);c.rotate(r*Math.PI/180);c.beginPath();c.moveTo(0,0);c.lineTo(QR,0);c.arc(0,0,QR,0,Math.PI/2,false);c.closePath();c.fillStyle=col;c.fill();c.restore()}
+  return function(ctx,t){
+    const ts=t*.001,tot=(cfgs.length-1)*(HOLD+MOVE)+HOLD,lt=ts%tot;
+    const ci=Math.min(cfgs.length-2,Math.floor(lt/(HOLD+MOVE)));
+    const lo=lt-ci*(HOLD+MOVE);
+    let st;
+    if(lo<HOLD){st=cfgs[ci]}
+    else{const p=Math.min(1,(lo-HOLD)/MOVE),ep=p*p*(3-2*p),f=cfgs[ci],to=cfgs[ci+1];st=f.map((v,i)=>({x:v.x+(to[i].x-v.x)*ep,y:v.y+(to[i].y-v.y)*ep,r:la(v.r,to[i].r,ep)}))}
+    for(let i=0;i<4;i++)dQ(ctx,cx+st[i].x*QR,cy+st[i].y*QR,st[i].r,QC[i]);
+  };
+}
+
+// ── 14. Fritz — diagram (from Pencil: triangle at ~1088,317, 298x298) ──
+function mkFritzDiag(z){
+  // Exact Pencil positions for Fritz triangle diagram
+  // Base: x:1088, y:317, 298x298 — path "M 20 200 L 200 200 L 200 0 Z" scaled to 298
+  // Red offset: x:1079, y:314 (dx:-9, dy:-3)
+  // Blue offset: x:1100, y:323 (dx:+12, dy:+6)
+  // Scan lines at y: 406, 451, 496, 541
+  function tri(ctx,bx,by,sz){ctx.beginPath();ctx.moveTo(bx+sz*0.067,by+sz);ctx.lineTo(bx+sz,by+sz);ctx.lineTo(bx+sz,by);ctx.closePath();}
+  return function(ctx,t){
+    const tm=t*.0003;
+    const pulse=Math.sin(tm*4)*.5; // subtle scan line drift
+    // Base triangle
+    tri(ctx,1088,317,298);
+    ctx.fillStyle='rgba(42,40,37,0.09)';ctx.fill();
+    ctx.strokeStyle='#2A2825';ctx.lineWidth=1.5;ctx.stroke();
+    // Red channel offset (from Pencil: x:1079, y:314)
+    tri(ctx,1079,314,298);
+    ctx.strokeStyle='rgba(229,77,46,0.5)';ctx.lineWidth=1.5;ctx.stroke();
+    // Blue channel offset (from Pencil: x:1100, y:323)
+    tri(ctx,1100,323,298);
+    ctx.strokeStyle='rgba(59,130,246,0.5)';ctx.lineWidth=1.5;ctx.stroke();
+    // Scan lines at exact Pencil y-positions
+    ctx.lineWidth=0.5;ctx.strokeStyle='rgba(42,40,37,0.19)';
+    const scans=[{x:1088,y:406,w:328},{x:1081,y:451,w:335},{x:1091,y:496,w:325},{x:1085,y:541,w:331}];
+    for(const s of scans){
+      const drift=Math.sin(tm*5+s.y*.01)*pulse;
+      ctx.beginPath();ctx.moveTo(s.x+drift,s.y);ctx.lineTo(s.x+s.w+drift,s.y);ctx.stroke();
+    }
+  };
+}
+
+// ── 15. Fritz System — animated glitch triangle ──
+function mkFritzAnim(z){
+  const n=N[2],cx=z.x+z.w*.5,cy=z.y+z.h*.45;
+  const R=Math.min(z.w,z.h)*.3;
+  return function(ctx,t){
+    const tm=t*.0004;
+    const glitch=Math.sin(tm*8)*8+Math.sin(tm*13)*4;
+    for(let layer=0;layer<3;layer++){
+      const ox=[glitch,-glitch,0][layer];
+      const oy=[0,glitch*.4,-glitch*.3][layer];
+      const color=[[229,77,46],[59,130,246],[42,40,37]][layer];
+      ctx.beginPath();
+      for(let i=0;i<3;i++){
+        const a=-Math.PI/2+i*Math.PI*2/3+.04;
+        ctx.lineTo(cx+ox+Math.cos(a)*R,cy+oy+Math.sin(a)*R);
+      }
+      ctx.closePath();
+      ctx.strokeStyle=rgba(color,.12+layer*.04);ctx.lineWidth=2;ctx.stroke();
+      if(layer===2){ctx.fillStyle=rgba(color,.02);ctx.fill();}
+    }
+    ctx.lineWidth=.6;
+    for(let i=0;i<12;i++){
+      const y=cy-R+i*(R*2/12)+Math.sin(tm*10+i)*2;
+      const shift=Math.sin(tm*5+i*1.3)>0.6?Math.sin(tm*5+i*1.3)*20:0;
+      ctx.strokeStyle=rgba(wtDark,.04);
+      ctx.beginPath();ctx.moveTo(z.x+shift,y);ctx.lineTo(z.x+z.w+shift,y);ctx.stroke();
+    }
+  };
+}
+
+// ── 16. Subtle horizontal rhythm ──
+function mkHorizRhythm(z){
+  return function(ctx,t){
+    const tm=t*.0002;
+    ctx.lineWidth=.5;
+    for(let i=0;i<20;i++){
+      const y=z.y+i*(z.h/20)+Math.sin(tm+i*.5)*3;
+      const alpha=.02+Math.sin(tm*2+i*.8)*.02;
+      ctx.strokeStyle=rgba(wtMid,Math.max(0,alpha));
+      ctx.beginPath();ctx.moveTo(z.x,y);ctx.lineTo(z.x+z.w,y);ctx.stroke();
+    }
+  };
+}
+
+// ── 17. Minimal dot progression ──
+function mkDotProgress(z){
+  const n=N[5];
+  const count=60;
+  const dots=[];
+  for(let i=0;i<count;i++) dots.push({x:z.x+Math.random()*z.w,y:z.y+Math.random()*z.h,sz:1.5+Math.random()*2,ph:Math.random()*Math.PI*2});
+  return function(ctx,t){
+    const tm=t*.0003;
+    for(const d of dots){
+      d.x+=n.n(d.x*.002+tm,d.y*.002)*.3;
+      d.y+=n.n(d.x*.002,d.y*.002+tm)*.3;
+      if(d.x<z.x)d.x=z.x+z.w;if(d.x>z.x+z.w)d.x=z.x;
+      if(d.y<z.y)d.y=z.y+z.h;if(d.y>z.y+z.h)d.y=z.y;
+      const pulse=.5+.5*Math.sin(tm*2+d.ph);
+      ctx.beginPath();ctx.arc(d.x,d.y,d.sz,0,Math.PI*2);
+      ctx.fillStyle=rgba(wtGold,.06+pulse*.08);ctx.fill();
+    }
+    ctx.lineWidth=.3;
+    for(let i=0;i<count;i++) for(let j=i+1;j<count;j++){
+      const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<60){ctx.strokeStyle=rgba(wtMid,.03*(1-dist/60));ctx.beginPath();ctx.moveTo(dots[i].x,dots[i].y);ctx.lineTo(dots[j].x,dots[j].y);ctx.stroke();}
+    }
+  };
+}
+
+// ─── Create animation functions ───
+// Map slide index to maker function (noAnim slides have null)
+const makersBySlide = [mkSwarm, mkGrid, mkConv, mkPhase, mkNet, mkNoise, mkCubes, mkPatternGrid, mkTripleSine, null, mkFieldsAnim, null, null, null, null, null, null, null, null, null, null, null, mkHorizRhythm];
+const anims = contexts.map(c => makersBySlide[c.idx](c.zone));
+
+// ─── Render loop ───
+// Canvas draws BG fill + animation each frame. No transparency.
+function loop(t) {
+  for (let i = 0; i < contexts.length; i++) {
+    const ctx = contexts[i].ctx;
+    // Fill entire canvas with per-slide BG color
+    ctx.fillStyle = contexts[i].bg;
+    ctx.fillRect(0, 0, W, H);
+    // Draw animation (particles draw on top of BG, confined to zone)
+    anims[i](ctx, t);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
