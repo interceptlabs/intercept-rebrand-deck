@@ -366,7 +366,7 @@ slides.forEach((s, i) => {
   // For bgImg slides, use the image directly instead of a canvas
   if (s.bgImg) {
     const img = document.createElement('img');
-    img.src = s.bgImg;
+    img.src = 'assets/slides/' + s.bgImg;
     img.width = W; img.height = H;
     img.className = 'slide-img';
     img.style.cssText = 'display:block;width:100%;height:auto;';
